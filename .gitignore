@@ -1,0 +1,5 @@
+yosys/tmp/
+openroad/out/
+klayout/out/
+klayout/*.gds
+*.gds

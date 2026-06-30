@@ -1,0 +1,483 @@
+cdsLibManager.main showCategoriesOn boolean t
+
+; general user interface settings
+; allow maximum undo operations
+ui undoLevel int 20
+; be silent
+ui beepVolume int 0
+; allow command nesting
+ui nestLimit int 5
+ui setWinTraversal boolean nil
+ui dblClkTime int 200
+ui winPlaceStyle boolean nil
+
+; default simulation settings and save options
+spectre.tran errpreset string "conservative"
+spectre.opts temp string "27"
+spectre.opts additionalArgs string "ignorezerovar=yes"
+spectre.outputs currents string "all"
+spectre.outputs saveahdlvars string "all"
+spectre.outputs nestlvl string "5"
+spectre.outputs pwr string ""
+spectre.outputs elementInfo boolean t
+spectre.outputs modelParamInfo boolean t
+spectre.outputs useprobes string ""
+spectre.outputs subcktprobelvl string "5"
+spectre.outputs save string "allpub"
+spectre.outputs outputParamInfo boolean t
+
+;;AMS INFORMATION --- DINESH
+spectre.envOpts useAltergroup boolean nil
+
+; default AnalogArtist directory
+asimenv saveDir string "./artist_states"
+
+; do not create backup files of simulation results!
+asimenv.misc numberOfSavedRuns int 0
+
+graphic defaultOpenLibName string "SG13_dev"
+graphic defaultOpenViewName string "schematic"
+
+; show all levels of hierarchy
+graphic startLevel int 0
+graphic stopLevel int 32
+graphic useTrueBBox boolean t
+graphic snapMode string "anyAngle"
+graphic selectionAperture int 5
+graphic jumpersOn boolean t
+graphic drawAxesOn boolean t
+graphic defaultNewViewName string "schematic"
+graphic defaultNewLibName string ""
+graphic tinyInstDetail boolean nil
+graphic markerSeverity string "all"
+graphic gridMultiple int 5
+graphic displayStretchHandles boolean t
+graphic askSaveOnReturn boolean t
+graphic textJustificationOn boolean t
+graphic segSnapMode string "anyAngle"
+graphic outlineOnly boolean t
+graphic iterNum int 500
+graphic eipRedraw boolean t
+graphic defaultToolName string ""
+graphic defaultOpenCellName string ""
+graphic pruneSize float 10
+graphic leDispNetExpr boolean t
+graphic drawDottedGridOn boolean t
+graphic displayPinNames boolean t
+graphic pathWidth float 5
+graphic probeTextOn boolean t
+graphic partialSelect boolean t
+graphic markerZoomScale int 4
+graphic filterSize float 1
+graphic defaultNewCellName string ""
+graphic stretchHandlesLayer string "y0 drawing"
+graphic coalesceRatio int 10
+graphic arrayDisplay string "Full"
+graphic markerZoom boolean t
+graphic instLabel string "master"
+graphic coalesceLimit int 10
+graphic viewNameToTypeList string ""
+graphic transformMarkersOn boolean t
+graphic markerShowIgnore boolean t
+graphic minStippleSize float 1
+graphic gridSpacing float 1
+graphic drawSurroundingOn boolean t
+graphic viewNameList string ""
+graphic snapToGrid boolean t
+graphic originMarkersOn boolean t
+graphic minLabelSize float 1
+graphic drawInstancePins boolean t
+graphic accessEdgesOn boolean nil
+graphic packetDialogBoxes boolean t
+graphic iconsOn boolean t
+graphic filterSizeDrawingStyle string "filled"
+graphic ySnapSpacing float 1
+graphic xSnapSpacing float 1
+graphic pathCL string "yes"
+graphic netsOn boolean t
+graphic leCheckMissingMasters boolean t
+graphic minRefreshArea int 500
+graphic maxDragFig int 500
+graphic dynamicHilightOn boolean t
+graphic drawGridOn boolean t
+graphic dotsOn boolean t
+
+layout autoRefresh boolean t
+; display all hierarchy levels
+layout startLevel int 0
+layout stopLevel int 32
+; display reference point (last entry point/relative measurements)
+layout displayRefPoint boolean t
+layout autoSetRefPoint boolean t
+layout lockAngles boolean t
+; automatically re-route wire if instance is moved (!warning!)
+layout maintainConnections boolean nil
+; gravity control
+layout gravityOn boolean nil
+layout gravityType string "pin edge midpoint nexus junction vertex end centerline"
+layout gravityDepth int 0
+layout gravityAperture float 0.3
+layout gravityBounceX float 0
+layout gravityBounceY float 0
+
+layout xSnapSpacing float 0.01
+layout ySnapSpacing float 0.01
+layout gridMultiple int 5
+
+layout displayPinNames boolean t
+layout createPinLabel boolean t
+layout pinTextPurpose string "text"
+layout pinTextSameLayer boolean t
+layout pinShape cyclic "rectangle"
+layout pinAccessDir string "left right top bottom"
+layout pinWidth float 0.6
+layout pinXPitch float 0
+layout pinYPitch float 0
+layout preservePins boolean nil
+layout autoPermutePins boolean t
+layout drawInstancePins boolean nil
+layout instViewName string "layout"
+layout instLibName string "SG13_dev"
+layout instLabel string "master"
+layout instColumns int 1
+layout instRows int 1
+layout useTrueBBox boolean t
+layout termName string ""
+layout snapMode string "diagonal"
+layout numLevels int 32
+layout moveToLayer boolean nil
+layout connStatus cyclic "needToConnect"
+layout abutPerpSnapOn boolean t
+layout selectionAperture int 5
+layout replaceFigs boolean t
+layout removeChopShape boolean t
+layout labelFontStyle cyclic "stick"
+layout jumpersOn boolean nil
+layout drawAxesOn boolean t
+layout criticality int 10
+layout confirmDelete boolean nil
+layout abutServerOn boolean t
+layout tinyInstDetail boolean nil
+layout ignoreBounce boolean nil
+layout extractEnabled boolean t
+layout displayStretchHandles boolean t
+layout copyToLayer boolean nil
+layout textJustificationOn boolean t
+layout segSnapMode string "diagonal"
+layout rodAutoName string ""
+layout outlineOnly boolean t
+layout numSides int 20
+layout labelDrafting boolean t
+layout iterNum int 0
+layout eipRedraw boolean nil
+layout trlWidth2 float 20
+layout recursionCheck boolean t
+layout pruneSize float 1
+layout modalCommands boolean t
+layout modCornerRadius float 1
+layout leDispNetExpr boolean t
+layout drawDottedGridOn boolean t
+layout yankShape cyclic "rectangle"
+layout pathWidth float 0.6
+layout pathStyle cyclic "truncateExtend"
+layout pathBeginExt float 0
+layout fixedWidthPaths boolean nil
+layout applyBounce boolean nil
+layout probeTextOn boolean t
+layout pathOffset float 0
+layout partialSelect boolean nil
+layout nPtsToTaper int 20
+layout markerZoomScale int 1
+layout magnification float 1
+layout labelOverbar boolean nil
+layout labelHeight float 1
+layout keepRuler boolean t
+layout instName string ""
+layout flattenPCells boolean nil
+layout flattenMode cyclic "one level"
+layout filterSize float 3
+layout figOrder cyclic "current"
+layout stretchPCellApplyToName boolean t
+layout orientation cyclic "R0"
+layout labelJustify cyclic "centerCenter"
+layout coalesceRatio int 50
+layout autoNetName boolean t
+layout arrayDisplay string "Full"
+layout termDirection cyclic "inputOutput"
+layout coalesceLimit int 16
+layout chopShape cyclic "rectangle"
+layout zoomToFig boolean t
+layout transformMarkersOn boolean t
+layout toggle boolean nil
+layout polygonArc boolean nil
+layout trlWidth1 float 20
+layout trlBendFac float 1
+layout mppTemplate string "New"
+layout minStippleSize float 1
+layout gridSpacing float 0.01
+layout drawSurroundingOn boolean t
+layout copyRows int 1
+layout viewNameList string ""
+layout updatePCellIncrement float -1
+layout trlRadFac float 3
+layout trlBendStyle cyclic "bend"
+layout snapToGrid boolean t
+layout pathJustify cyclic "center"
+layout originMarkersOn boolean t
+layout minLabelSize float 1
+layout instDelY float 0
+layout accessEdgesOn boolean nil
+layout taperStyle cyclic "linear"
+layout reshapeType cyclic "rectangle"
+layout pathEndExt float 0
+layout modCornerType cyclic "radial"
+layout iconsOn boolean nil
+layout filterSizeDrawingStyle string "outlined"
+layout descendPromptForView boolean nil
+layout pathCL cyclic "yes"
+layout netsOn boolean nil
+layout labelAttach boolean nil
+layout instCellName string ""
+layout propClass cyclic "attributes"
+layout pickNCreate boolean nil
+layout routeMenuOn boolean t
+layout netName string ""
+layout multiSegRuler boolean nil
+layout moreDialogs boolean t
+layout minRefreshArea int 10
+layout maxDragFig int 50
+layout keepFirstTermName boolean nil
+layout instDelX float 0
+layout extractStopLevel int 0
+layout dynamicHilightOn boolean t
+layout drawGridOn boolean t
+layout dotsOn boolean t
+layout copyColumns int 1
+
+layoutXL mfactorSplit boolean t
+layoutXL lxDeltaWidth float 0
+layoutXL initIOLabelType string "Label"
+layoutXL probeCycleHilite boolean t
+layoutXL flightLineEnable boolean t
+layoutXL viewList string "schematic netlist symbol layout compacted symbolic"
+layoutXL initCreateInstances boolean t
+layoutXL crossSelect boolean t
+layoutXL infoWindow boolean t
+layoutXL initAspectRatioOption string "Aspect Ratio W/H"
+layoutXL stopList string "layout compacted symbolic"
+layoutXL probePin boolean t
+layoutXL mfactorNames string "m M"
+layoutXL initCreateMTM boolean t
+layoutXL probeInfoInCIW boolean t
+layoutXL lxStackPartitionParameters string "(1 8)"
+layoutXL initPrBoundaryW float 0
+layoutXL initAspectRatio float 1
+layoutXL autoArrange boolean t
+layoutXL initPinHeight float 0
+layoutXL lxStackMinimalFolding boolean nil
+layoutXL paramTolerance float 1e-06
+layoutXL orientation string "R0"
+layoutXL initDoStacking boolean nil
+layoutXL initCreatePins boolean t
+layoutXL initPinMultiplicity int 1
+layoutXL transistorWidthParamNames string "r R c C l L"
+layoutXL initDoFolding boolean nil
+layoutXL initUtilization float 25
+layoutXL initEstimateArea boolean t
+layoutXL probeDevice boolean t
+layoutXL moveAsGroup boolean t
+layoutXL lxAllowPseudoParallelNets boolean nil
+layoutXL initPrBoundaryH float 0
+layoutXL paramsToIgnore string "lxIgnoredParams dleIgnoredParams lxStopList dleStopList lxUseCell dleUseCell maskLayoutViewName posi instancesLastChanged instNamePrefix pin# lxTimeStamp dleSchExtractPath lxPlacementStatus"
+layoutXL createBoundaryLabel boolean nil
+layoutXL autoAbutment boolean t
+layoutXL setPPConn boolean t
+layoutXL sfactorNames string "s S"
+layoutXL updateReplacesMasters boolean nil
+layoutXL probeNet boolean t
+layoutXL initGlobalNetPins boolean t
+layoutXL lxFingeringNames string "fingers finger"
+layoutXL probeHiliteLayer string "hilite drawing"
+layoutXL initCreateBoundary boolean t
+layoutXL propsUsedToIgnoreObjs string "lvsIgnore ignore nlAction"
+layoutXL propsUsedToIgnoreObjsForCheck string "lvsIgnore ignore nlAction"
+layoutXL initPinWidth float 0
+layoutXL initIOPinLayer string "Metal1 pin"
+layoutXL autoSpace boolean t
+layoutXL.placement saveAsCellName string ""
+layoutXL.placement openWindow boolean nil
+layoutXL.placement vcpConductorDepth int 2
+layoutXL.placement rowPowerLayer string ""
+layoutXL.placement saveAsLibName string ""
+layoutXL.placement rowGroundWidth float 1
+layoutXL.placement rowPowerWidth float 1
+layoutXL.placement saveAsViewName string ""
+layoutXL.placement vcpKeepoutDepth int 2
+layoutXL.placement rowPowerName string ""
+layoutXL.placement rowGroundName string ""
+layoutXL.placement allowRotation boolean t
+layoutXL.placement rowGroundLayer string ""
+layoutXL.placement saveAs boolean nil
+
+schematic schDynamicHilightOn boolean t
+schematic symGridSpacing float 0.125
+schematic vicInheritedPins boolean t
+schematic pinBackTrace boolean t
+schematic symPathType cyclic "full"
+schematic tsgTemplateType string "digital"
+schematic srcOffsheetConnCheck cyclic "ignored"
+schematic symbolPinUsage string ""
+schematic invokeKanjiEditor string "kterm -km euc -e vi"
+schematic modalCommands boolean t
+schematic schDrawAxesOn boolean nil
+schematic updateInstResetCDF boolean t
+schematic gravityOn boolean t
+schematic schPathType cyclic "full"
+schematic srcNetNameSyntax cyclic "ignored"
+schematic srcTermNameSyntax cyclic "ignored"
+schematic createLabelVertRotation cyclic "R90"
+schematic pinRefSorting string "Sheet Number"
+schematic srcMaxLabelOffset cyclic "ignored"
+schematic snapEnabled boolean t
+schematic zoomOutButton boolean nil
+schematic srcUnconnectedWires cyclic "ignored"
+schematic markerShowIgnore boolean t
+schematic autoDot boolean t
+schematic minMarkerSize float 0.06
+schematic symMaxDragFig int 100
+schematic runVIC boolean t
+schematic srcSolderOnCrossover cyclic "warning"
+schematic symSnapSpacing float 0.0625
+schematic vicSeverity cyclic "warning"
+schematic maxLabelOffsetUU float 0.045
+schematic updateConn boolean t
+schematic schematicAreaPartialSelect boolean nil
+schematic drawModeRoute string "route"
+schematic schFilterSize float 0.3
+schematic statusBannerXY boolean nil
+schematic saveAction cyclic "Ask Me"
+schematic srcNameCollision cyclic "warning"
+schematic symShowDirectConnects boolean nil
+schematic vicInheritedPinMatch boolean t
+schematic drawMode string "anyAngle"
+schematic schGridMultiple int 8
+schematic symbolLabelFontStyle cyclic "stick"
+schematic checkHierSave boolean t
+schematic dotOverlap float 0.03125
+schematic srcInstNameSyntax cyclic "ignored"
+schematic createLabelHorzOffset float 0.045
+schematic symCoalesceLimit int 2
+schematic markerZoom boolean nil
+schematic srcFloatingInput cyclic "warning"
+schematic statusBanner boolean t
+schematic vicExactPinMatch boolean nil
+schematic createLabelHorzRotation cyclic "R0"
+schematic schGridSpacing float 0.125
+schematic srcInheritedConn cyclic "ignored"
+schematic flightWidth float 0
+schematic schematicSelectFilter string "allSchObj instancePin"
+schematic symDrawAxesOn boolean nil
+schematic srcFloatingIO cyclic "warning"
+schematic srcVHDLSyntax cyclic "ignored"
+schematic viewNameList string "schematic symbol"
+schematic descendTarget string "query user"
+schematic editPropCDFParamView string "Use Tools Filter"
+schematic srcVerilogSyntax cyclic "ignored"
+schematic echoToCIW boolean t
+schematic pinRefDuplicates boolean nil
+schematic defaultsFile string ""
+schematic symDisplayDepth int 3
+schematic createLabelFontStyle cyclic "stick"
+schematic noteFontHeight float 0.0625
+schematic srcInstOverlapValue int 10
+schematic symbolLabelChoice cyclic "instance label"
+schematic createLabelOffsetMode boolean t
+schematic markerSeverity string "all"
+schematic pinNameSeed string "pin"
+schematic srcFloatingOutput cyclic "warning"
+schematic symbolLabelChoiceText string ""
+schematic editPropShowUser boolean t
+schematic netNameRangeDescend boolean nil
+schematic noteJustify cyclic "lowerCenter"
+schematic schMaxDragFig int 100
+schematic srcInstNameExpr string ""
+schematic checkSymTime int 1
+schematic sensitiveMenu boolean t
+schematic symbolPinLocate cyclic "left"
+schematic shapeLineType cyclic "narrow"
+schematic srcConnByName cyclic "ignored"
+schematic transToSheetType string "single"
+schematic createLabelFontHeight float 0.0625
+schematic netNameMethod cyclic "prefix"
+schematic srcInstOverlap cyclic "warning"
+schematic createLabelHorzPosition cyclic "above"
+schematic instLibName string "SG13_dev"
+schematic symbolSelectFilter string "allSymObj"
+schematic createLabelVertPosition cyclic "left"
+schematic findZoomButton boolean nil
+schematic stickyWireLabelRange float 0.3125
+schematic symbolShapeFillStyle cyclic "outline"
+schematic editPropShowCDF boolean t
+schematic markerType toggle (t t)
+schematic pinRefFormat string "<sheetNumber><zone><referenceName>"
+schematic schCoalesceLimit int 2
+schematic symGridType cyclic "dotted"
+schematic symbolAreaPartialSelect boolean nil
+schematic createInstResetCDF boolean t
+schematic srcTermNameExpr string ""
+schematic schShowDirectConnects boolean nil
+schematic shapeLineWidth float 0.0625
+schematic srcNetNameExpr string ""
+schematic markerSource toggle (t t t t)
+schematic ssgPackageLabels cyclic "none"
+schematic symbolLabelType cyclic "NLPLabel"
+schematic noteType cyclic "normalLabel"
+schematic schGridType cyclic "dotted"
+schematic browserType string "library"
+schematic deleteInstPinsWire boolean t
+schematic netNamePrefix string "net"
+schematic srcFloatingNets cyclic "warning"
+schematic symDynamicHilightOn boolean t
+schematic checkAlways boolean nil
+schematic cvDisplay boolean t
+schematic noteShapeLineStyle cyclic "solid"
+schematic symbolPinIncrCount int 1
+schematic broadcast boolean nil
+schematic editPropShowSystem boolean nil
+schematic noteFontStyle cyclic "stick"
+schematic symbolPinFlatten boolean t
+schematic symbolShape cyclic "line"
+schematic netExprDisplay cyclic "value only"
+schematic schSnapSpacing float 0.0625
+schematic spanLib string "do not check"
+schematic srcPinNetCollision cyclic "ignored"
+schematic symFilterSize float 0.3
+schematic compBackTrace boolean t
+schematic netNameSeparator string "_"
+schematic srcFloatingBIDIR cyclic "warning"
+schematic createInstShowCDF boolean t
+schematic noteShape cyclic "line"
+schematic createLabelVertOffset float 0.045
+schematic symShowLabelOrigin boolean nil
+schematic blockDirRules cyclic "edge"
+schematic condOp cyclic "=="
+schematic createLabelJustify cyclic "lowerCenter"
+schematic wireBackTrace boolean nil
+schematic descendSheet string "sheet"
+schematic checkBeepOn boolean t
+schematic createCvOptions boolean t
+schematic srcNoOverrideNet cyclic "warning"
+schematic symGridMultiple int 8
+schematic srcShortedOutputs cyclic "warning"
+schematic differential boolean nil
+schematic symbolLabelFontHeight float 0.0625
+schematic findAccessMode string "edit"
+schematic vicViewList string "symbol schematic functional behavioral system opt_sch opt_net"
+schematic ssgSortPins cyclic "alphanumeric"
+schematic defWideWireWidth float 0.0625
+schematic replSaveChanges boolean nil
+schematic runSRC boolean t
+schematic schDisplayDepth int 3
+schematic schShowLabelOrigin boolean nil
+schematic symbolLabelJustify cyclic "lowerCenter"
+schematic checkSupportAMS boolean nil

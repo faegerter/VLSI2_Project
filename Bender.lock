@@ -1,0 +1,108 @@
+packages:
+  apb:
+    revision: null
+    version: null
+    source:
+      Path: rtl/apb
+    dependencies:
+    - common_cells
+  axi_stream:
+    revision: 54891ff40455ca94a37641b9da4604647878cc07
+    version: 0.1.1
+    source:
+      Git: https://github.com/pulp-platform/axi_stream.git
+    dependencies:
+    - common_cells
+  common_cells:
+    revision: null
+    version: null
+    source:
+      Path: rtl/common_cells
+    dependencies:
+    - common_verification
+    - tech_cells_generic
+  common_verification:
+    revision: null
+    version: null
+    source:
+      Path: rtl/common_verification
+    dependencies: []
+  cve2:
+    revision: null
+    version: null
+    source:
+      Path: rtl/cve2
+    dependencies:
+    - common_cells
+  idma:
+    revision: null
+    version: null
+    source:
+      Path: rtl/idma
+    dependencies:
+    - common_cells
+    - obi
+  mac_accelerator:
+    revision: null
+    version: null
+    source:
+      Path: rtl/user_domain/mac_accelerator
+    dependencies:
+    - common_cells
+    - obi
+  obi:
+    revision: null
+    version: null
+    source:
+      Path: rtl/obi
+    dependencies:
+    - common_cells
+    - common_verification
+  obi_peripherals:
+    revision: null
+    version: null
+    source:
+      Path: rtl/obi_uart
+    dependencies:
+    - common_cells
+    - obi
+  riscv-dbg:
+    revision: null
+    version: null
+    source:
+      Path: rtl/riscv-dbg
+    dependencies:
+    - common_cells
+    - tech_cells_generic
+  slink_obi:
+    revision: null
+    version: null
+    source:
+      Path: rtl/serial_link
+    dependencies:
+    - axi_stream
+    - common_cells
+    - obi
+  sram_monitor:
+    revision: null
+    version: null
+    source:
+      Path: rtl/sram_monitor
+    dependencies:
+    - common_cells
+    - obi
+  tech_cells_generic:
+    revision: null
+    version: null
+    source:
+      Path: rtl/tech_cells_generic
+    dependencies:
+    - common_verification
+  user_rom:
+    revision: null
+    version: null
+    source:
+      Path: rtl/user_domain/user_rom
+    dependencies:
+    - common_cells
+    - obi

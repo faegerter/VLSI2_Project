@@ -1,0 +1,10 @@
+DEFINE RM_IHPSG13_v2_2 /usr/pack/ihp-sg13-kgf/open_ihp_sg13g2/sg13g2_sram/v2.2/dfii.dz/RM_IHPSG13_v2_2
+DEFINE SG13_Examples ${IHP_TECH}/lib/SG13_Examples
+DEFINE SG13_dev ${IHP_TECH}/lib/SG13_dev
+DEFINE SG13_dev /usr/pack/ihp-sg13-kgf/ihp_sg13g2/SG13G2_618_rev1.2.13/lib/SG13_dev
+DEFINE TL_SG13 ${IHP_TECH}/lib/TL_SG13/TL_SG13
+DEFINE ahdlLib ${CDSHOME}/tools/dfII/samples/artist/ahdlLib
+DEFINE analogLib ${CDSHOME}/tools/dfII/etc/cdslib/artist/analogLib
+DEFINE basic ${CDSHOME}/tools/dfII/etc/cdslib/basic
+DEFINE sg13cmos5l_io /usr/pack/ihp-sg13-kgf/open_ihp_sg13cmos5l/sg13cmos5l_io/v0.1/dfii.dz/sg13cmos5l_io
+DEFINE sg13cmos5l_stdcell /usr/pack/ihp-sg13-kgf/open_ihp_sg13cmos5l/sg13cmos5l_stdcell/v0.1/dfii.dz/sg13cmos5l_stdcell

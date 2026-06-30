@@ -1,0 +1,62 @@
+# Copyright 2022 ETH Zurich and University of Bologna.
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+
+package:
+  name: slink_obi
+  authors:
+    - "Tim Fischer <fischeti@iis.ee.ethz.ch>"
+    - "Manuel Eggimann <meggimann@iis.ee.ethz.ch>"
+    - "Thomas Benz <tbenz@iis.ee.ethz.ch>"
+    - "Paul Scheffler <paulsc@iis.ee.ethz.ch>"
+    - "Llorenç Muela Hausmann <lmuela@ethz.ch>"
+    - "Fabian Aegerter <faegerter@ethz.ch>"
+
+dependencies:
+  common_cells:        { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.28.0 }
+  axi_stream:          { git: "https://github.com/pulp-platform/axi_stream.git",         version: 0.1.1  }
+  obi:                 { git: "https://github.com/pulp-platform/obi.git",                version: 0.1.7  }
+
+export_include_dirs:
+  - include/
+  - src
+  - src/include
+  - src/regs
+
+sources:
+  files:
+
+    # Configuration Registers
+    - src/regs/slink_reg_pkg.sv
+    - src/regs/slink_reg.sv
+
+    # General package
+    - src/slink_pkg.sv
+
+    # Abstraction Layers
+    - src/channel_allocator/slink_stream_chopper.sv
+    - src/channel_allocator/slink_stream_dechopper.sv
+    - src/channel_allocator/slink_channel_despread_sfr.sv
+    - src/channel_allocator/slink_channel_spread_sfr.sv
+    - src/channel_allocator/slink_ch_alloc.sv
+    - src/slink_prot_layer.sv
+    - src/slink_link_layer.sv
+    - src/slink_phys_layer.sv
+    - src/slink_rsp_reorder.sv
+
+    # Serial Link main module
+    - include_dirs:
+      - src/include
+      files:
+      - src/slink.sv
+
+    - target: slink_test
+      include_dirs:
+      - src/regs
+      files:
+      - test/obi_test_fix_pkg.sv
+      - test/tb_obi_slink.sv
+      - test/tb_stream_chopper.sv
+      - test/tb_stream_chopper_dechopper.sv
+      - test/tb_channel_allocator.sv
+

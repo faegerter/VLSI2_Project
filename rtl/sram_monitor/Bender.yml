@@ -1,0 +1,25 @@
+package:
+  name: sram_monitor
+  authors:
+    - "Fabian Aegerter <faegerter@ethz.ch>"
+    - "Maximilian Kocher <mkocher@ethz.ch>"
+
+dependencies:
+  common_cells:        { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.28.0 }
+  obi:                 { git: "https://github.com/pulp-platform/obi.git",                version: 0.1.7  }
+
+export_include_dirs:
+  - src
+  - src/regs
+
+sources:
+  files:
+
+    # Package (access-type + register-map enums)
+    - src/sram_monitor_pkg.sv
+
+    # Configuration Registers
+    - src/regs/sram_monitor_regs.sv
+
+    # SRAM Monitor main module
+    - src/sram_monitor.sv

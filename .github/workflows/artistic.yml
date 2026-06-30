@@ -1,0 +1,127 @@
+# Copyright (c) 2025 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Philippe Sauter <phsauter@iis.ee.ethz.ch>
+# Author:  Thomas Benz <tbenz@iis.ee.ethz.ch>
+
+name: ArtistIC Render
+
+on:
+    workflow_dispatch:
+    workflow_run:
+      workflows: ["Full Flow"]
+      types: [completed]
+      branches: [main]
+
+jobs:
+  artistic:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 60
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+
+      # Check out croc repo and cleanup
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Free disk space
+        uses: ./.github/actions/free-space
+      # Restore previous artifacts (GDS and DEF)
+      - name: Download GDS artifact from "Full Flow" workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: croc-gds-sealed
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: klayout/out
+      - name: Download DEF artifact from "Full Flow" workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: croc-openroad-out
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: openroad
+
+      # Install dependencies
+      - name: Update package lists and install Inkscape, img2pdf, Magick, potrace, Pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y inkscape img2pdf imagemagick potrace
+          pip install --break-system-packages svgpathtools Pillow
+      - name: Install packages in OSEDA
+        uses: ./.github/actions/oseda-cmd
+        with:
+          cmd: "pip install --break-system-packages gdspy"
+
+      # Prepare and create logo
+      - name: Prepare logo
+        run: |
+          cd artistic; ./run_artistic.sh --prepare-logo
+      - name: Create Logo
+        uses: ./.github/actions/oseda-cmd
+        with:
+          cmd: "cd artistic; ./run_artistic.sh --create-logo croc.sealed.gds.gz"
+
+      # Render Chip
+      - name: Render RAW
+        uses: ./.github/actions/oseda-cmd
+        with:
+          cmd: "cd artistic; ./run_artistic.sh --render-raw"
+      - name: Render PDF
+        run: |
+          cd artistic; ./run_artistic.sh --render-pdf
+
+      # Render Outlines
+      - name: Create annotated outlines SVG
+        run: |
+          cd artistic; ./run_artistic.sh --outline
+
+      # Render Map
+      - name: Render map RAW
+        uses: ./.github/actions/oseda-cmd
+        with:
+          cmd: "cd artistic; ./run_artistic.sh --render-map-raw"
+      - name: Render map DB
+        run: |
+          cd artistic; ./run_artistic.sh --render-map-db
+
+      # Upload artifacts
+      - name: Upload ArtistIC artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: croc-artistic
+          path: |
+            artistic/meerkat_work/croc.sealed.gds.gz
+            artistic/meerkat_work/croc_logo.*
+            artistic/meerkat_work/*.log
+            artistic/renderics/croc_modules.*
+            artistic/renderics/croc_render.*
+            artistic/renderics/croc_colors.svg
+            artistic/renderics/*.log
+        continue-on-error: true
+
+      # Deploy
+      - name: Copy files to be deployed
+        run: |
+          cp openroad/reports/04_croc.routed.png artistic/mapify/croc_routed.png
+          cp artistic/meerkat_work/croc_logo.gds artistic/mapify/croc_logo.gds
+          cp artistic/renderics/croc_modules.jpg artistic/mapify/croc_modules.jpg
+          cp artistic/renderics/croc_render.jpg artistic/mapify/croc_render.jpg
+      - name: Upload OpenStreetMap DB to pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: artistic/mapify
+      - name: Deploy pages
+        if: github.ref == 'refs/heads/main'
+        id: deployment
+        uses: actions/deploy-pages@v4

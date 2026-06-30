@@ -1,0 +1,23 @@
+# Copyright (c) 2024 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Published with permission from Siemens. 
+# Siemens QuestaSim is available through EDA Higher Education Software Program
+# https://www.sw.siemens.com/en-US/academic/educators/eda-higher-education-software/
+#
+# Authors:
+# - Philippe Sauter <phsauter@iis.ee.ethz.ch>
+
+set ROOT ".."
+
+if {[catch { vlog -incr -sv \
+    +define+FUNCTIONAL \
+    "$ROOT/technology/verilog/ez130_8t.v" \
+    "$ROOT/technology/verilog/sg13cmos5l_io.v" \
+    "$ROOT/technology/verilog/RM_IHPSG13_1P_core_behavioral_bm_bist.v" \
+    "$ROOT/technology/verilog/RM_IHPSG13_1P_512x32_c2_bm_bist.v" \
+    "$ROOT/technology/verilog/RM_IHPSG13_1P_2048x64_c2_bm_bist.v" \
+    "$ROOT/ihp13/bondpad/verilog/bondpad_70x70.v" \
+    "$ROOT/vsim/tech_fill_stubs.v" \
+}]} {return 1}

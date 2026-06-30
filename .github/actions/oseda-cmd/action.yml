@@ -1,0 +1,61 @@
+# Copyright (c) 2025 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Philippe Sauter <phsauter@iis.ee.ethz.ch>
+
+name: 'OSEDA Command Action'
+description: 'Sets up OSEDA environment and runs commands in a Docker container'
+
+inputs:
+  cmd:
+    description: 'Command to run in the OSEDA container'
+    required: true
+  service_name:
+    description: 'Name of the Docker service (default: from ./docker-compose.yml)'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Docker environment
+      shell: bash
+      run: |
+        echo "UID=$(id -u)" >> "$GITHUB_ENV"
+        echo "GID=$(id -g)" >> "$GITHUB_ENV"
+
+    - name: Get image name from docker-compose
+      id: get-image
+      shell: bash
+      run: |
+        IMAGE=$(docker compose config | awk '/image:/{print $2}' | head -n 1)
+        if [ -z "$IMAGE" ]; then
+          echo "[ERROR] No image found in docker-compose.yml"
+          exit 1
+        fi
+        echo "IMAGE_NAME=$IMAGE" >> "$GITHUB_ENV"
+
+    - name: Pull Docker image
+      shell: bash
+      run: |
+        docker compose pull
+
+    - name: Determine service name if not provided
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.service_name }}" ]; then
+          SERVICE_NAME=$(docker compose config --services | head -n 1)
+          echo "service_name=$SERVICE_NAME" >> "$GITHUB_ENV"
+        else
+          echo "service_name=${{ inputs.service_name }}" >> "$GITHUB_ENV"
+        fi
+
+    - name: Run commands in OSEDA container
+      shell: bash
+      run: |
+        # Avoid extra pulls now that we've already pulled
+        docker compose up -d --pull=never
+        docker compose exec -T "${{ env.service_name }}" \
+          bash -lc "source ~/.bashrc; ${{ inputs.cmd }}" | tee result.log
+        echo "result_log=$(pwd)/result.log" >> "$GITHUB_ENV"

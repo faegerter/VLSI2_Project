@@ -1,0 +1,9 @@
+* DO NOT DELETE THIS FILE (edit only)
+* users may add own device models directly or per include
+* in this file as an alternative to specifying multiple
+* model paths in the Cadence Analog Environment
+
+*simulator lang=spectre
+
+* user-defined inductor models:
+* include "${PROJECT}/inductors.lib"

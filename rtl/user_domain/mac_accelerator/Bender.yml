@@ -1,0 +1,22 @@
+package:
+  name: mac_accelerator
+  authors:
+    - "Fabian Aegerter <faegerter@ethz.ch>"
+    - "Maximilian Kocher <mkocher@ethz.ch>"
+
+dependencies:
+  common_cells:        { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.28.0 }
+  obi:                 { git: "https://github.com/pulp-platform/obi.git",                version: 0.1.7  }
+
+export_include_dirs:
+  - src
+  - src/regs
+
+sources:
+  files:
+
+    # Configuration Registers
+    - src/regs/mac_ctrl_regs.sv
+
+    # MAC accelerator main module
+    - src/mac_accelerator.sv
