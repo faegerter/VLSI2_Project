@@ -1,75 +1,66 @@
-# Croc System-on-Chip
+# Ring_Slink — Ringbus for Inference Acceleration
 
-A simple SoC for education using PULP IPs. Croc includes all scripts necessary to produce a nearly finished chip in [IHPs open-source 130nm technology](https://github.com/IHP-GmbH/IHP-Open-PDK/tree/main).
+This repository contains **Ring_Slink**, a chip designed by **Fabian Aegerter** and **Maximilian Kocher** in the course **[VLSI 2](https://vlsi.ethz.ch/)** at **ETH Zürich** (Spring 2026, Integrated Systems Laboratory).
 
-As it is oriented towards education, it forgoes some configurability to increase readability of the RTL and scripts.
+The chip has been manufactured and is part of the **ETH Zürich chip gallery**: [asic.ethz.ch/2026/Ring_Slink.html](http://asic.ethz.ch/2026/Ring_Slink.html)
 
-Croc is developed as part of the PULP project, a joint effort between ETH Zurich and the University of Bologna.
+It is based on [Croc](https://github.com/pulp-platform/croc), a simple RISC-V SoC for education built from PULP IPs, and extends it so that **multiple chips can be coupled into a unidirectional ring bus to distribute machine-learning inference workloads** (matrix-vector multiplication $y = \mathbf{W} \cdot x$) across up to 14 nodes. Each node additionally contains a dedicated **MAC accelerator** to speed up local computation.
 
-Croc was successfully taped out in Nov 2024 in the chip [MLEM](http://asic.ee.ethz.ch/2024/MLEM.html), named after the sound Yoshi makes when eating a tasty fruit. MLEM's core functionality was verified on real silicon early 2026.  
-MLEM was designed and prepared for tapeout by ETHZ students as a bachelor project. The exact code and scripts used for the tapeout can be seen in the frozen [mlem-tapeout](https://github.com/pulp-platform/croc/tree/mlem-tapeout) branch.
+## Chip Facts
+
+| | |
+|---|---|
+| Technology | IHP 130 nm (EZ130 8T standard-cell library) |
+| Die size | 2500 × 2000 µm incl. sealring (2416 × 1916 µm core) |
+| Complexity | ~523 kGE |
+| System clock | 80 MHz |
+| Ring link | 1 channel, 10 lanes, DDR, clock division 4 |
+| Tapeout | Spring 2026 |
+
+## Concept
+
+A large weight matrix $\mathbf{W}$ is partitioned row-wise across all chips in the ring. The initiator node (node 0) distributes the matrix partitions and broadcasts the input vector $x$ over the ring; every node then computes its partial result $y_i = \mathbf{W}_i x$ and forwards it hop-by-hop back to the initiator. Since computation scales as $O(n^2)$ while communication scales as $O(n)$, larger matrices yield disproportionately greater speedups — in simulation up to **15.6×** for a 16 kB weight matrix on 13 nodes, and a theoretical **66.6×** for a 224 kB matrix distributed over 14 chips (vs. a hypothetical single-chip baseline of equal memory).
+
+## Design Additions on Top of Croc
+
+- **Ring Serial Link** (`rtl/serial_link`): a modified version of the [Ring Serial Link IP](https://github.com/faegerter/Ring-Serial-Link) (developed by Fabian Aegerter and Llorenç Muela Hausmann as a semester thesis). It transports OBI transactions between the SoCs in a unidirectional ring; the four most significant address bits select the target node. Modifications for this chip ([global_payloads branch](https://github.com/faegerter/Ring-Serial-Link/tree/global_payloads)):
+  - New **global write payload** type: write to *every* node in the ring with a single transaction, without write responses (used to broadcast $x$ and configuration).
+  - Widened from 8 to **10 lanes** and tightened payload packing (4 address MSBs live only in the header), reducing write payloads from 5 to 4 cycles (20% speedup).
+- **MAC accelerator** (`rtl/user_domain/mac_accelerator`): a 3-stage pipelined multiply-accumulate unit computing $y = \mathbf{W}x$ row by row. Two parallel OBI manager ports fetch $W[i]$ and $x[i]$ simultaneously from separate SRAM banks, sustaining one MAC per cycle. Controlled via a small OBI register file; raises interrupts on row completion and when all remote results have been received.
+- **SRAM monitor** (`rtl/sram_monitor`): counts accesses of a configurable type to a configurable address range of an SRAM bank and raises an interrupt when a threshold is reached — used to detect when the broadcast of $x$ (or the return of all partial results) has finished.
+- **Hardware multiplier**: the CVE2 core is configured with `RV32MFast` (stock Croc uses `RV32MNone`) so the software baseline does not fall back to slow multiply emulation.
+- **OBI cut** between the Ring Serial Link manager port and the crossbar to close timing at 80 MHz.
+
+The full design report with the analytical cost model, register maps and measurement results is linked on the [chip gallery page](http://asic.ethz.ch/2026/Ring_Slink.html).
 
 ## Architecture
 
-![Croc block diagram](doc/croc_arch.svg)
+![Ring_Slink block diagram](doc/ring_slink_arch.png)
 
-The SoC is composed of two main parts:
+The underlying SoC is composed of two main parts:
 
-- The `croc_domain` containing a CVE2 core (a more minimal fork of Ibex), SRAM, an OBI crossbar and a few simple peripherals
-- The `user_domain` where students are invited to add their own designs or other open-source designs (peripherals, accelerators...)
+- The `croc_domain` containing a CVE2 core (a minimal fork of Ibex), SRAM, an OBI crossbar and simple peripherals (UART, GPIO, timer, CLINT, debug module).
+- The `user_domain` containing the MAC accelerator and a user ROM.
 
-The main interconnect is OBI, you can find [the spec online](https://github.com/openhwgroup/obi/blob/072d9173c1f2d79471d6f2a10eae59ee387d4c6f/OBI-v1.6.0.pdf).
-
-The various IPs of the SoC (UART, OBI, debug-module, timer...) come from other PULP repositories and are managed by [Bender](https://github.com/pulp-platform/bender).
-To make it easier to browse and understand, only used or important building blocks are included in `rtl/<IP>`. You may want to explore the repositories of the respective IPs to find their documentation or additional functionality, the urls are in `Bender.yml`.
-
-## Configuration
-
-The main SoC configurations are in `rtl/croc_pkg.sv`:
-
-| Parameter           | Default          | Function                                              |
-|---------------------|------------------|-------------------------------------------------------|
-| `PulpJtagIdCode`    | `32'h1C0C_5DB3`  | Debug module ID code                                  |
-| `iDMAEnable`        | `0`              | Enable optional DMA (see `rtl/idma`)                  |
-| `NumSramBanks`      | `2`              | Number of memory banks                                |
-| `SramBankNumWords`  | `512`            | Number of 32bit words in a memory bank                |
-| `BootAddr`          | `32'h1000_0000`  | Default boot address set in 'soc_ctrl' register       |
-| `CrocAddrMap`       | see 'Memory Map' | Routing rules used for the main crossbar              |
-| `PeriphAddrMap`     | see 'Memory Map' | Routing rules used for the peripheral demuliplexer    |
-
-Further configurations can be made in `rtl/core_wrap.sv` (core specifics) and `rtl/croc_soc.sv` (connectivity between domains and to/from outside).
-
-The SRAMs are instantiated via a technology wrapper called `tc_sram_impl` (tc: tech_cells), the technology-independent implementation is in `rtl/tech_cells_generic/tc_sram_impl.sv`. A number of SRAM configurations are implemented using IHP130 SRAM memories in `ihp13/tc_sram_impl.sv`. If an unimplemented SRAM configuration is instantiated it will result in a `tc_sram_blackbox` module which can then be easily identified from the synthesis results.
-
-## Bootmodes
-
-Currently the only way to boot is via JTAG.
+The main interconnect is OBI ([spec](https://github.com/openhwgroup/obi/blob/072d9173c1f2d79471d6f2a10eae59ee387d4c6f/OBI-v1.6.0.pdf)). The various IPs come from other PULP repositories and are managed by [Bender](https://github.com/pulp-platform/bender); only the used building blocks are vendored into `rtl/<IP>`.
 
 ## Memory Map
 
-If possible, the memory map should remain compatible with [Cheshire's memory map](https://pulp-platform.github.io/cheshire/um/arch/#memory-map).  
-Further each new subordinate should occupy multiples of 4KB of the address space (`32'h0000_1000`).
-
-The address map of the default configuration is as follows:
-
-| Start Address   | Stop Address    | Description                                |
-|-----------------|-----------------|--------------------------------------------|
-| `32'h0000_0000` | `32'h0004_0000` | Debug module (JTAG)                        |
-| `32'h0200_0000` | `32'h0200_4000` | Bootrom                                    |
-| `32'h0204_0000` | `32'h0208_0000` | CLINT peripheral                           |
-| `32'h0300_0000` | `32'h0300_1000` | SoC control/info registers                 |
-| `32'h0300_2000` | `32'h0300_3000` | UART peripheral                            |
-| `32'h0300_5000` | `32'h0300_6000` | GPIO peripheral                            |
-| `32'h0300_A000` | `32'h0300_B000` | Timer peripheral                           |
-| `32'h0300_B000` | `32'h0300_C000` | (optional) DMA configuration               |
-| `32'h1000_0000` | `+SRAM_SIZE`    | Memory banks (SRAM)                        |
-| `32'h2000_0000` | `32'h8000_0000` | Passthrough to user domain                 |
-| `32'h2000_0000` | `32'h2000_1000` | reserved for user ROM text*                |
-
-*If people modify Croc we suggest they add a ROM at this address containing additional information
-like the names of the developers, a project link or similar. This can then be written out via UART.  
-We ask people to format the ROM like a C string with zero termination and using ASCII encoding if feasible.  
-The [MLEM user ROM](https://github.com/pulp-platform/croc/blob/mlem-tapeout/rtl/user_domain/user_rom.sv) may serve as one possible reference implementation.
+| Start Address   | Stop Address    | Description                                      |
+|-----------------|-----------------|--------------------------------------------------|
+| `32'h0000_0000` | `32'h0004_0000` | Debug module (JTAG)                              |
+| `32'h0200_0000` | `32'h0200_4000` | Bootrom                                          |
+| `32'h0204_0000` | `32'h0208_0000` | CLINT peripheral                                 |
+| `32'h0300_0000` | `32'h0300_1000` | SoC control/info registers                       |
+| `32'h0300_2000` | `32'h0300_3000` | UART peripheral                                  |
+| `32'h0300_5000` | `32'h0300_6000` | GPIO peripheral                                  |
+| `32'h0300_6000` | `32'h0300_7000` | SRAM monitor                                     |
+| `32'h0300_A000` | `32'h0300_B000` | Timer peripheral                                 |
+| `32'h0300_B000` | `32'h0300_C000` | (optional) DMA configuration                     |
+| `32'h0400_0000` | `32'h0400_5800` | Memory banks (3× 2 kB + 1× 16 kB SRAM)           |
+| `32'h0FFF_E000` | `32'h0FFF_F000` | User domain (MAC accelerator registers, user ROM)|
+| `32'h0FFF_F000` | `32'h1000_0000` | Ring Serial Link configuration registers         |
+| `32'h1000_0000` | `32'hFFFF_FFFF` | Ring window: 4 address MSBs select the target node |
 
 ## Flow
 
@@ -82,53 +73,22 @@ graph LR;
 
 1. Bender provides a list of SystemVerilog files
 2. Yosys parses, elaborates, optimizes and maps the design to the technology cells
-3. The netlist, constraints and floorplan are loaded into OpenRoad for Place&Route
-4. The design as def is read by klayout and the geometry of the cells and macros are merged
+3. The netlist, constraints and floorplan are loaded into OpenRoad for Place & Route
+4. The design as def is read by KLayout and the geometry of the cells and macros are merged
 
-### Example Results
+### Implementation Results
 
-|Cell/Module placement                      |  Routing                             |
-|:-----------------------------------------:|:------------------------------------:|
-|![Chip module view](doc/croc_modules.jpg)  |  ![Chip routed](doc/croc_routed.jpg) |
+|Module placement and pinout                                  |  Area per module                        |
+|:-----------------------------------------------------------:|:---------------------------------------:|
+|![Module placement and pinout](doc/ring_slink_modules_pins.png) | ![Area per module](doc/ring_slink_area.png) |
+
+Average power grows linearly with the number of nodes in the ring (simulated running the MAC accelerator benchmark; a single node draws ~82 mW):
+
+<img src="doc/ring_slink_power.png" alt="Ring power vs. number of nodes" width="600"/>
 
 ## Requirements
 
-We are using the excellent docker container maintained by Harald Pretl. If you get stuck with installing the tools, we urge you to check the [Tool Repository](https://github.com/iic-jku/IIC-OSIC-TOOLS).  
-The current supported version is 2025.12, no other version is officially supported.
-
-### ETHZ systems
-
-ETHZ Design Center maintains an internal version of the IHP PDK, with integrations into all tools we have access to. For this reason if you work on the ETH systems it is recommended to use the `icdesign` tool (cockpit) instead of the liked Github repo.  
-You can directly create a cockpit directory inside the croc directory:
-
-```sh
-# Make sure you are in <somedir>/croc
-# the checked-out repository
-icdesign ihp13 -nogui
-```
-
-The setup is guided by the `.cockpitrc` configuration file. If you need different macros or another version of the standard cells you can change it accordingly.
-
-Yyou may prefer to just enter a shell in the pre-installed osic-tools container using:
-
-```sh
-oseda bash
-# specific version eg: oseda -2025.12 bash
-```
-
-### Other systems
-
-**Note: this has currently only been tested on Ubuntu and RHEL Linux.**
-
-#### Docker (easy)
-
-There are two possible ways, the easiest way is to install docker and work in the docker container, you can follow the install guides on the [Docker Website](https://docs.docker.com/desktop/).  
-You do not need to manually download the container image, this will be done when running the script.
-If you do not have `git` installed on your system, you also need to install [Github Desktop](https://desktop.github.com/download/) and then clone this git repository.  
-
-It is a good idea to grant non-root (`sudo`) users access to docker, this is decribed in the [Docker Article](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
-
-Finally, you can navigate to this directory, open a terminal (PowerShell in Windows) and type:
+The flow runs in the docker container maintained by Harald Pretl ([IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS)); the supported version is 2025.12.
 
 ```sh
 # Linux only (starts and enters docker container in shell)
@@ -139,30 +99,13 @@ scripts/start_vnc.sh
 scripts/start_vnc.bat
 ```
 
-If you use the VNC option, open a browser and type `localhost` in the address bar.
-This should connect you to the VNC server, the password is `abc123`, then test by right-clicking somewhere, starting the terminal and typing `ls`.  
-You should see the files in this repository again.
+Alternatively, install the tools natively: [Bender](https://github.com/pulp-platform/bender#installation), [Yosys](https://github.com/YosysHQ/yosys#building-from-source), [Yosys-Slang](https://github.com/povik/yosys-slang), [OpenRoad](https://github.com/The-OpenROAD-Project/OpenROAD/blob/master/docs/user/Build.md) and optionally [Verilator](https://github.com/verilator/verilator) or Questasim/Modelsim.
 
-Now you should be in an Ubuntu environment with all tools pre-installed for you.  
-If something does not work, refer to the upstream [IIC-OSIC-Tools](https://github.com/iic-jku/IIC-OSIC-TOOLS/tree/main).
+On ETHZ systems, the internal PDK integration can be set up with `icdesign ihp13 -nogui` (configured via `.cockpitrc`), or enter the pre-installed container with `oseda bash`.
 
-To stop the VNC server, run the start script again and then select between stopping or stop and remove the running docker container.
+## Getting Started
 
-#### Native install (hard)
-
-You need to build/install the required tools manually:
-
-- [Bender](https://github.com/pulp-platform/bender#installation): Dependency manager
-- [Yosys](https://github.com/YosysHQ/yosys#building-from-source): Synthesis tool
-- [Yosys-Slang](https://github.com/povik/yosys-slang): SystemVerilog frontend for Yosys
-- [OpenRoad](https://github.com/The-OpenROAD-Project/OpenROAD/blob/master/docs/user/Build.md): Place & Route tool
-- (Optional) [Verilator](https://github.com/verilator/verilator): Simulator
-- (Optional) Questasim/Modelsim: Simulator
-
-## Getting started
-
-The SoC is fully functional as-is and a simple software example is provided for simulation.
-To run the synthesis and place & route flow execute:
+To run the synthesis and place & route flow:
 
 ```sh
 git submodule update --init --recursive
@@ -171,14 +114,14 @@ cd ../openroad && ./run_backend.sh --all
 cd ../klayout && ./run_finishing.sh --gds
 ```
 
-To simulate you can use:
+To simulate with Verilator:
 
 ```sh
 cd sw && make all
 cd ../verilator && ./run_verilator.sh --build --run ../sw/bin/helloworld.hex
 ```
 
-If you have Questasim/Modelsim, you can also run:
+With Questasim/Modelsim:
 
 ```sh
 cd vsim && ./run_vsim.sh --build --run ../sw/bin/helloworld.hex
@@ -186,51 +129,29 @@ cd vsim && ./run_vsim.sh --build --run ../sw/bin/helloworld.hex
 
 All `run_` scripts have a `--help` you can use to orient yourself.
 
-### Building on Croc
-
-To add your own design, we recommend creating a new directory under `rtl/` or put single source files (small designs) into `rtl/user_domain`, then go into `Bender.yml` and add the files in the indicated places.
-This will make Bender aware of the files and any script it contains will contain your design as well.
-
-Then re-generate the default synthesis file-list:
+For simulation, `scripts/simulate.sh` is an end-to-end helper that covers most simulation needs: it builds the requested test program and runs it through either the Verilator or QuestaSim flow, on the multi-node ring testbench (`tb_croc_soc_ring`) or the single-node standard testbench (`tb_croc_soc`), in RTL or post-layout (optionally SDF-annotated) configuration, with configurable ring size and MAC test parameters:
 
 ```sh
-cd yosys && ./run_synthesis.sh --flist
-cd ../verilator && ./run_verilator.sh --flist
+# e.g. MAC accelerator benchmark on a 4-node ring
+scripts/simulate.sh --test mac_accel --num-nodes 4
+# all options
+scripts/simulate.sh --help
 ```
 
-If you want to add an existing design and it already containts a `Bender.yml` in its repository, you can add it as a dependency in the `Bender.yml` and reading the guide below.
+### Software Tests
 
-## Bender
+`sw/test/` contains unit tests for the peripherals and the design additions, most notably:
 
-The dependency manager [Bender](https://github.com/pulp-platform/bender) is used in most pulp-platform IPs.
-Usually each dependency would be in a seperate repository, each with a `Bender.yml` file to describe where the RTL files are, how you can use this dependency and which additional dependency it has.
-In the top level repository (like this SoC) you also have a `Bender.yml` file but you will commonly find a `Bender.lock` file. It contains the resolved tree of dependencies with specific commits for each. Whenever you run a command using Bender, this is the file it uses to figure out where things are.
+- `test_mac_accel.c` — MAC accelerator functionality
+- `test_serial_link.c` — Ring Serial Link transactions
+- `test_sram_monitor.c` — SRAM monitor thresholds and interrupts
+- `test_compute.c` — the distributed matrix-vector benchmark; compiled per node with `NODE_ID`, `NUM_NODES`, `VEC_LEN`, `NUM_ROWS` and `USE_MAC_ACCEL` preprocessor defines
 
-Below is a small guide aimed at the usecase for this project. The Bender repo has a more extensive [Command Guide](https://github.com/pulp-platform/bender?tab=readme-ov-file#commands).
+## Acknowledgements
 
-### Checkout
-
-Using the command `bender checkout` Bender will check the lock file and download the specified commits from the repositories (usually into a hidden `.bender` directory).
-
-### Update
-
-Running `bender update` on the other hand will resolve the entire tree again and re-generate the lock file (you usually have to resolve some version/revision conflicts if multiple things use the same dependency).
-
-**Remember:** always test everything again if you generate a new `Bender.lock`, it is the same as modifying RTL.
-
-### Local Versions
-
-For this repository, we use a subcommand called `bender vendor` together with the `vendor_package` section in `Bender.yml`.
-`bender vendor` can be used to Benderize arbitrary repositories with RTL in it. The dependencies are already 'checked out' into `rtl/<IP>`. Each file or directory from the repository is mapped to a local path in this repo.
-Fixes and changes to each IPs `rtl/<IP>/Bender.yml` are managed by `bender vendor` in `rtl/patches`.
-
-If you need to update a dependency or map another file you need to edit the coresponding `vendor_package` section in `Bender.yml` and then run `bender vendor init`. Then you might need to change `rtl/<IP>/Bender.yml` to list your new file in the sources. 
-To save a fix/change as a patch, stage it in git and then run `bender vendor patch`. When prompted, add a commit message (this is used as the patches file name). Finally, commit both the patch file and the new `rtl/<IP>`.
-
-**Note:** using `bender vendor` in this repository to change the local versions of the IPs requires an up-to-date version of Bender. (v0.28.2 or newer)
-### Targets
-
-Another thing we use are targets (in the `Bender.yml`), together they build different views/contexts of your RTL. For example without defining any targets the technology independent cells/memories are used (in `rtl/tech_cells_generic/`) but if we use the target `ihp13` then the same modules contain a technology-specific implementation (in `ihp13/`). Similar contexts are built for different simulators and other things.
+- [Croc SoC](https://github.com/pulp-platform/croc) — the base SoC, developed as part of the PULP project, a joint effort between ETH Zürich and the University of Bologna
+- [Ring Serial Link](https://github.com/faegerter/Ring-Serial-Link) — Fabian Aegerter and Llorenç Muela Hausmann
+- The Integrated Systems Laboratory (IIS) at ETH Zürich for the VLSI 2 course, tapeout preparation and manufacturing
 
 ## License
 
