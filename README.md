@@ -145,7 +145,6 @@ scripts/simulate.sh --help
 - `test_mac_accel.c` — MAC accelerator functionality
 - `test_serial_link.c` — Ring Serial Link transactions
 - `test_sram_monitor.c` — SRAM monitor thresholds and interrupts
-with `NODE_ID`, `NUM_NODES`, `VEC_LEN`, `NUM_ROWS` and `USE_MAC_ACCEL` preprocessor defines
 
 ## Acknowledgements
 
