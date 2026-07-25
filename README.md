@@ -4,6 +4,8 @@ This repository contains **Ring_Slink**, a chip designed by **Fabian Aegerter** 
 
 The chip has been manufactured and is part of the **ETH Zürich chip gallery**: [asic.ethz.ch/2026/Ring_Slink.html](http://asic.ethz.ch/2026/Ring_Slink.html)
 
+**Full project report:** [Ringbus for Inference Acceleration](doc/report.pdf) — the analytical cost model, register maps, and detailed measurement results.
+
 It is based on [Croc](https://github.com/pulp-platform/croc), a simple RISC-V SoC for education built from PULP IPs, and extends it so that **multiple chips can be coupled into a unidirectional ring bus to distribute machine-learning inference workloads** (matrix-vector multiplication $y = \mathbf{W} \cdot x$) across up to 14 nodes. Each node additionally contains a dedicated **MAC accelerator** to speed up local computation.
 
 ## Chip Facts
@@ -23,26 +25,24 @@ A large weight matrix $\mathbf{W}$ is partitioned row-wise across all chips in t
 
 ## Design Additions on Top of Croc
 
-- **Ring Serial Link** (`rtl/serial_link`): a modified version of the [Ring Serial Link IP](https://github.com/faegerter/Ring-Serial-Link) (developed by Fabian Aegerter and Llorenç Muela Hausmann as a semester thesis). It transports OBI transactions between the SoCs in a unidirectional ring; the four most significant address bits select the target node. Modifications for this chip ([global_payloads branch](https://github.com/faegerter/Ring-Serial-Link/tree/global_payloads)):
+- **Ring Serial Link** (`rtl/serial_link`): a modified version of the [Ring Serial Link IP](https://github.com/faegerter/Ring-Serial-Link). It transports OBI transactions between the SoCs in a unidirectional ring; the four most significant address bits select the target node. Modifications for this chip ([global_payloads branch](https://github.com/faegerter/Ring-Serial-Link/tree/global_payloads)):
   - New **global write payload** type: write to *every* node in the ring with a single transaction, without write responses (used to broadcast $x$ and configuration).
   - Widened from 8 to **10 lanes** and tightened payload packing (4 address MSBs live only in the header), reducing write payloads from 5 to 4 cycles (20% speedup).
 - **MAC accelerator** (`rtl/user_domain/mac_accelerator`): a 3-stage pipelined multiply-accumulate unit computing $y = \mathbf{W}x$ row by row. Two parallel OBI manager ports fetch $W[i]$ and $x[i]$ simultaneously from separate SRAM banks, sustaining one MAC per cycle. Controlled via a small OBI register file; raises interrupts on row completion and when all remote results have been received.
-- **SRAM monitor** (`rtl/sram_monitor`): counts accesses of a configurable type to a configurable address range of an SRAM bank and raises an interrupt when a threshold is reached — used to detect when the broadcast of $x$ (or the return of all partial results) has finished.
+- **SRAM monitor** (`rtl/sram_monitor`): counts accesses of a configurable type to a configurable address range of an SRAM bank and raises an interrupt when a threshold is reached. Used to detect when the broadcast of $x$ (or the return of all partial results) has finished.
 - **Hardware multiplier**: the CVE2 core is configured with `RV32MFast` (stock Croc uses `RV32MNone`) so the software baseline does not fall back to slow multiply emulation.
-- **OBI cut** between the Ring Serial Link manager port and the crossbar to close timing at 80 MHz.
 
-The full design report with the analytical cost model, register maps and measurement results is linked on the [chip gallery page](http://asic.ethz.ch/2026/Ring_Slink.html).
 
 ## Architecture
 
 ![Ring_Slink block diagram](doc/ring_slink_arch.png)
 
-The underlying SoC is composed of two main parts:
+The SoC is composed of two main parts:
 
-- The `croc_domain` containing a CVE2 core (a minimal fork of Ibex), SRAM, an OBI crossbar and simple peripherals (UART, GPIO, timer, CLINT, debug module).
-- The `user_domain` containing the MAC accelerator and a user ROM.
+- The `croc_domain` — a CVE2 core (a minimal fork of Ibex), four SRAM banks (3× 2 kB + 1× 16 kB), the OBI crossbar, the standard peripherals (UART, GPIO, timer, CLINT, JTAG debug module, bootrom) and, added for this project, the **Ring Serial Link** (with its config registers and an OBI pipeline cut on its manager port) and the **SRAM monitor**. The crossbar was substantially expanded to route the additional managers (the serial link and the MAC accelerator's two OBI ports), which makes the `croc_domain` one of the largest blocks on the chip.
+- The `user_domain` — the **MAC accelerator** (with its control registers) and a user ROM.
 
-The main interconnect is OBI ([spec](https://github.com/openhwgroup/obi/blob/072d9173c1f2d79471d6f2a10eae59ee387d4c6f/OBI-v1.6.0.pdf)). The various IPs come from other PULP repositories and are managed by [Bender](https://github.com/pulp-platform/bender); only the used building blocks are vendored into `rtl/<IP>`.
+The main interconnect is OBI ([spec](https://github.com/openhwgroup/obi/blob/072d9173c1f2d79471d6f2a10eae59ee387d4c6f/OBI-v1.6.0.pdf)). The various base IPs come from other PULP repositories and are managed by [Bender](https://github.com/pulp-platform/bender); only the used building blocks are vendored into `rtl/<IP>`.
 
 ## Memory Map
 
@@ -145,12 +145,12 @@ scripts/simulate.sh --help
 - `test_mac_accel.c` — MAC accelerator functionality
 - `test_serial_link.c` — Ring Serial Link transactions
 - `test_sram_monitor.c` — SRAM monitor thresholds and interrupts
-- `test_compute.c` — the distributed matrix-vector benchmark; compiled per node with `NODE_ID`, `NUM_NODES`, `VEC_LEN`, `NUM_ROWS` and `USE_MAC_ACCEL` preprocessor defines
+with `NODE_ID`, `NUM_NODES`, `VEC_LEN`, `NUM_ROWS` and `USE_MAC_ACCEL` preprocessor defines
 
 ## Acknowledgements
 
 - [Croc SoC](https://github.com/pulp-platform/croc) — the base SoC, developed as part of the PULP project, a joint effort between ETH Zürich and the University of Bologna
-- [Ring Serial Link](https://github.com/faegerter/Ring-Serial-Link) — Fabian Aegerter and Llorenç Muela Hausmann
+- [Ring Serial Link](https://github.com/faegerter/Ring-Serial-Link) — [Fabian Aegerter](https://github.com/faegerter) and [Llorenç Muela Hausmann](https://github.com/llorenc-m)
 - The Integrated Systems Laboratory (IIS) at ETH Zürich for the VLSI 2 course, tapeout preparation and manufacturing
 
 ## License
