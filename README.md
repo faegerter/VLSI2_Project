@@ -6,7 +6,7 @@ The chip has been manufactured and is part of the **ETH Zürich chip gallery**: 
 
 **Full project report:** [Ringbus for Inference Acceleration](doc/report.pdf) — the analytical cost model, register maps, and detailed measurement results.
 
-It is based on [Croc](https://github.com/pulp-platform/croc), a simple RISC-V SoC for education built from PULP IPs, and extends it so that **multiple chips can be coupled into a unidirectional ring bus to distribute machine-learning inference workloads** (matrix-vector multiplication $y = \mathbf{W} \cdot x$) across up to 14 nodes. Each node additionally contains a dedicated **MAC accelerator** to speed up local computation.
+It is based on [Croc](https://github.com/pulp-platform/croc), a simple RISC-V SoC for education built from PULP IPs, and extends it so that **multiple chips can be coupled into a unidirectional ring bus to distribute machine-learning inference workloads** (matrix-vector multiplication $y = \mathbf{W} \cdot x$) across up to 14 (or 15 nodes depending on configuration). Each node additionally contains a dedicated **MAC accelerator** to speed up local computation.
 
 ## Chip Facts
 
